@@ -1,5 +1,13 @@
 import { GameState, parseLLMMove, getBoardStateForLLM, PieceType, Square } from './chessLogic';
 
+export interface LLMModel {
+  id: string;
+  name: string;
+  description: string;
+  apiUrl: string;
+  provider: string;
+}
+
 export interface LLMConfig {
   model: string;
   apiKey: string;
@@ -9,19 +17,33 @@ export interface LLMConfig {
 }
 
 // LLM Model configurations
-export const llmModels = [
+export const llmModels: LLMModel[] = [
+  {
+    id: 'gpt-4-turbo-preview',
+    name: 'GPT-4 Turbo',
+    description: 'Most capable model with latest knowledge. Best for complex chess strategies.',
+    apiUrl: 'https://api.openai.com/v1/chat/completions',
+    provider: 'openai'
+  },
+  {
+    id: 'gpt-4',
+    name: 'GPT-4',
+    description: 'Highly capable model with strong chess understanding.',
+    apiUrl: 'https://api.openai.com/v1/chat/completions',
+    provider: 'openai'
+  },
   {
     id: 'gpt-3.5-turbo',
-    name: 'OpenAI GPT-3.5',
-    description: 'OpenAI\'s fast and capable language model',
+    name: 'GPT-3.5 Turbo',
+    description: 'Fast and efficient model for casual chess games.',
     apiUrl: 'https://api.openai.com/v1/chat/completions',
     provider: 'openai'
   }
 ];
 
-// Simulate thinking time (min 3 seconds, max 10 seconds)
+// Simulate thinking time (min 5 seconds, max 15 seconds)
 const simulateThinking = () => new Promise(resolve => {
-  const thinkingTime = Math.random() * 7000 + 3000; // Random time between 3-10 seconds
+  const thinkingTime = Math.random() * 10000 + 5000; // Random time between 5-15 seconds
   setTimeout(resolve, thinkingTime);
 });
 
@@ -39,9 +61,14 @@ export async function getAIMove(gameState: GameState, config: LLMConfig): Promis
           } ${move.notation}`).join(' ')}`
       : 'No moves played yet.';
     
-    // Get raw text response from LLM
-    await simulateThinking(); // Add thinking time
-    const llmResponse = await getLLMResponse(fen, moveHistoryText, config);
+    // Get raw text response from LLM with increased timeout
+    await simulateThinking();
+    const llmResponse = await Promise.race([
+      getLLMResponse(fen, moveHistoryText, config),
+      new Promise<string>((_, reject) => 
+        setTimeout(() => reject(new Error('Request timed out after 30 seconds')), 30000)
+      )
+    ]);
     
     // Extract a valid chess move from the LLM response
     const moveData = parseLLMMove(gameState, llmResponse);
@@ -79,7 +106,7 @@ Based on this position, provide the best move in algebraic notation (e.g. "e4", 
 Give only ONE single move without any explanation or additional text.
 `;
 
-  // Only use OpenAI's API since we're focusing on GPT-3.5-turbo
+  // Get response from OpenAI
   return await getOpenAIResponse(prompt, config);
 }
 

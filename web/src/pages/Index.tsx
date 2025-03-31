@@ -10,7 +10,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Tabs,
   TabsContent,
@@ -18,19 +18,19 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { useGame } from '../contexts/GameContext';
-import { llmModels } from '../utils/llmUtils';
-import ModelSelector from '@/components/ModelSelector';
+import { llmModels, LLMModel } from '../utils/llmUtils';
 import { Users, Bot, ChevronDown } from 'lucide-react';
+import { GameSettings } from '../components/GameSettings';
 
 export default function Index() {
-  const { selectedModel, getLLMConfig } = useGame();
+  const { selectedModel, getLLMConfig, setSelectedModel } = useGame();
   const [gameMode, setGameMode] = useState<'human-vs-human' | 'human-vs-ai'>('human-vs-human');
-  const [playerColor, setPlayerColor] = useState<Color>('w');
+  const [playerColor, setPlayerColor] = useState<'w' | 'b'>('w');
   const [isBoardFlipped, setIsBoardFlipped] = useState(false);
   const [gameEndDialog, setGameEndDialog] = useState<{
     open: boolean;
     result: 'checkmate' | 'stalemate';
-    winner?: Color;
+    winner?: 'w' | 'b';
   }>({ open: false, result: 'checkmate' });
   const [showAiDialog, setShowAiDialog] = useState(false);
   
@@ -38,7 +38,16 @@ export default function Index() {
 
   // Reset game to initial state
   const handleReset = () => {
-    // Reset game state
+    // Reset game logic here
+  };
+
+  // Handle game end
+  const handleGameEnd = (result: 'checkmate' | 'stalemate', winner?: 'w' | 'b') => {
+    setGameEndDialog({
+      open: true,
+      result,
+      winner
+    });
   };
 
   // Undo last move
@@ -46,43 +55,30 @@ export default function Index() {
     // Undo move logic
   };
 
-  const handleModelSelect = (modelId: string) => {
-    console.log('Handling model selection:', modelId);
+  const handleModelSelect = (model: LLMModel | null) => {
+    console.log('Handling model selection:', model);
     const config = getLLMConfig();
     console.log('LLM Config:', config);
     
     setShowAiDialog(false);
-    setGameMode('human-vs-ai');
+    setGameMode(model ? 'human-vs-ai' : 'human-vs-human');
     
     // Reset game
     handleReset();
     
+    setSelectedModel(model);
+    
     toast({
-      title: "AI Connected",
-      description: `You're now playing against ${llmModels.find(m => m.id === modelId)?.name || 'AI'}`,
+      title: model ? "AI Connected" : "AI Disconnected",
+      description: model ? `You're now playing against ${model.name}` : 'Switched to human vs human mode',
     });
   };
 
   useEffect(() => {
     if (selectedModel) {
-      console.log('Selected model changed:', selectedModel);
       handleModelSelect(selectedModel);
     }
   }, [selectedModel]);
-
-  // Move callback to track moves
-  const handleMove = (move: { from: string, to: string, notation: string }) => {
-    console.log(`Move: ${move.from} to ${move.to} (${move.notation})`);
-  };
-
-  // Handle game end
-  const handleGameEnd = (result: 'checkmate' | 'stalemate', winner?: Color) => {
-    setGameEndDialog({
-      open: true,
-      result,
-      winner
-    });
-  };
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-900 text-white">
@@ -150,8 +146,12 @@ export default function Index() {
               gameMode={gameMode}
               llmConfig={getLLMConfig()}
               playerColor={playerColor}
-              onMove={handleMove}
               onGameEnd={handleGameEnd}
+              onMove={(move) => {
+                console.log('Move:', move);
+              }}
+              onUndo={handleUndo}
+              isBoardFlipped={isBoardFlipped}
             />
           </div>
           
@@ -246,7 +246,7 @@ export default function Index() {
                   <div className="flex justify-between py-1 border-b border-gray-700">
                     <span className="text-gray-400">AI Model</span>
                     <span className="font-medium text-chess-ai-purple">
-                      {llmModels.find(m => m.id === selectedModel)?.name || selectedModel}
+                      {selectedModel?.name || 'No model selected'}
                     </span>
                   </div>
                 )}
@@ -277,9 +277,7 @@ export default function Index() {
               Select an AI model and provide your API key to play against.
             </DialogDescription>
           </DialogHeader>
-          
-          <ModelSelector onModelSelect={handleModelSelect} />
-          
+          <GameSettings />
           <div className="text-xs text-gray-500 mt-2">
             Your API key is stored locally and is never sent to our servers.
           </div>
@@ -301,7 +299,6 @@ export default function Index() {
                 : 'The game ended in a draw.'}
             </DialogDescription>
           </DialogHeader>
-          
           <div className="flex justify-end space-x-2">
             <Button 
               variant="outline" 

@@ -20,6 +20,8 @@ interface ChessboardProps {
   playerColor?: Color;
   onMove?: (move: { from: string, to: string, notation: string }) => void;
   onGameEnd?: (result: 'checkmate' | 'stalemate', winner?: Color) => void;
+  onUndo?: () => void;
+  isBoardFlipped?: boolean;
 }
 
 const Chessboard: React.FC<ChessboardProps> = ({
@@ -27,13 +29,15 @@ const Chessboard: React.FC<ChessboardProps> = ({
   llmConfig,
   playerColor = 'w',
   onMove,
-  onGameEnd
+  onGameEnd,
+  onUndo,
+  isBoardFlipped = false
 }) => {
   const [gameState, setGameState] = useState<GameState>(initializeChessGame());
   const [selectedSquare, setSelectedSquare] = useState<Square | null>(null);
   const [legalMoves, setLegalMoves] = useState<Square[]>([]);
   const [lastMove, setLastMove] = useState<{ from: Square, to: Square } | null>(null);
-  const [isFlipped, setIsFlipped] = useState(playerColor === 'b');
+  const [isFlipped, setIsFlipped] = useState(isBoardFlipped);
   const [isDragging, setIsDragging] = useState(false);
   const [aiThinking, setAiThinking] = useState(false);
   

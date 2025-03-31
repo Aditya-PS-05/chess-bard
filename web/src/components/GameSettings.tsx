@@ -1,38 +1,61 @@
 import React from 'react';
 import { useGame } from '../contexts/GameContext';
 import { llmModels } from '../utils/llmUtils';
-
-const gptTurboModel = llmModels.find(m => m.name === 'GPT-3.5-turbo');
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export function GameSettings() {
   const { selectedModel, setSelectedModel } = useGame();
-  const currentModel = gptTurboModel;
-
-  React.useEffect(() => {
-    if (selectedModel !== gptTurboModel.id) {
-      setSelectedModel(gptTurboModel.id);
-    }
-  }, [selectedModel, setSelectedModel, gptTurboModel]);
 
   return (
-    <div className="p-4 bg-gray-800 rounded shadow">
-      <h2 className="text-xl font-bold mb-4 text-white">AI Model Settings</h2>
-      
-      <div className="mb-4">
-        <label className="block text-sm font-medium mb-2 text-gray-300">Select AI Model</label>
-        <select
-          value={gptTurboModel.id}
-          disabled
-          className="w-full p-2 border rounded bg-gray-700 text-white border-gray-600"
-        >
-          <option key={gptTurboModel.id} value={gptTurboModel.id}>
-            {gptTurboModel.name}
-          </option>
-        </select>
-        <p className="text-sm text-gray-400 mt-2">
-          {gptTurboModel.description}
-        </p>
-      </div>
-    </div>
+    <Card className="w-full max-w-md">
+      <CardHeader>
+        <CardTitle>Game Settings</CardTitle>
+        <CardDescription>Choose your AI opponent</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm font-medium mb-2 block">Select AI Model</label>
+            <Select
+              value={selectedModel?.id || ''}
+              onValueChange={(value) => {
+                const model = llmModels.find(m => m.id === value);
+                if (model) {
+                  setSelectedModel(model);
+                } else {
+                  setSelectedModel(null);
+                }
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Choose your opponent">
+                  {selectedModel?.name}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {llmModels.map((model) => (
+                  <SelectItem key={model.id} value={model.id}>
+                    {model.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {selectedModel && (
+              <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                <h4 className="font-medium text-sm mb-2">{selectedModel.name}</h4>
+                <p className="text-sm text-gray-600 dark:text-gray-300">{selectedModel.description}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
