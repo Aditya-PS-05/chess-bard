@@ -20,16 +20,17 @@ import {
 import { useGame } from '../contexts/GameContext';
 import { llmModels, LLMModel } from '../utils/llmUtils';
 import { Users, Bot, ChevronDown } from 'lucide-react';
+import { initializeChessGame, GameState } from '../utils/chessLogic';
 import { GameSettings } from '../components/GameSettings';
+import VictoryModal from '../components/VictoryModal';
 
 export default function Index() {
   const { selectedModel, getLLMConfig, setSelectedModel } = useGame();
   const [gameMode, setGameMode] = useState<'human-vs-human' | 'human-vs-ai'>('human-vs-human');
   const [playerColor, setPlayerColor] = useState<'w' | 'b'>('w');
-  const [isBoardFlipped, setIsBoardFlipped] = useState(false);
   const [gameEndDialog, setGameEndDialog] = useState<{
     open: boolean;
-    result: 'checkmate' | 'stalemate';
+    result: 'checkmate' | 'stalemate' | 'king-captured';
     winner?: 'w' | 'b';
   }>({ open: false, result: 'checkmate' });
   const [showAiDialog, setShowAiDialog] = useState(false);
@@ -38,13 +39,27 @@ export default function Index() {
   
   const { toast } = useToast();
 
+  const [key, setKey] = useState(0);
+
   // Reset game to initial state
   const handleReset = () => {
+    // Reset all game-related state
     setMoves([]);
+    setGameEndDialog({
+      open: false,
+      result: 'checkmate',
+      winner: undefined
+    });
+    // Force a complete reset of the game
+    setGameState(initializeChessGame());
+    // Force a remount of the Chessboard component with a new key
+    setKey(prev => prev + 1);
   };
 
+  const [gameState, setGameState] = useState(() => initializeChessGame());
+
   // Handle game end
-  const handleGameEnd = (result: 'checkmate' | 'stalemate', winner?: 'w' | 'b') => {
+  const handleGameEnd = (result: 'checkmate' | 'stalemate' | 'king-captured', winner?: 'w' | 'b') => {
     setGameEndDialog({
       open: true,
       result,
@@ -96,6 +111,10 @@ export default function Index() {
       color: move.color,
       number: Math.floor(prev.length / 2) + 1
     }]);
+  };
+
+  const handlePlayAgain = () => {
+    handleReset();
   };
 
   return (
@@ -150,23 +169,18 @@ export default function Index() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Chessboard */}
           <div className="md:col-span-2">
-            <div className="mb-4">
-              <GameControls 
-                onReset={handleReset}
-                onUndo={handleUndo}
-                onFlipBoard={() => setIsBoardFlipped(!isBoardFlipped)}
-                isBoardFlipped={isBoardFlipped}
-              />
-            </div>
             
             <Chessboard 
+              key={key}
               gameMode={gameMode}
               llmConfig={getLLMConfig()}
               playerColor={playerColor}
               onGameEnd={handleGameEnd}
               onMove={handleMove}
               onUndo={handleUndo}
-              isBoardFlipped={isBoardFlipped}
+              isBoardFlipped={playerColor === 'b'}
+              gameState={gameState}
+              onGameStateChange={setGameState}
             />
           </div>
           
@@ -303,38 +317,12 @@ export default function Index() {
         </DialogContent>
       </Dialog>
       
-      {/* Game End Dialog */}
-      <Dialog open={gameEndDialog.open} onOpenChange={(open) => setGameEndDialog({...gameEndDialog, open})}>
-        <DialogContent className="sm:max-w-[425px] bg-gray-900 text-white border-gray-700">
-          <DialogHeader>
-            <DialogTitle>
-              {gameEndDialog.result === 'checkmate' ? 'Checkmate!' : 'Stalemate!'}
-            </DialogTitle>
-            <DialogDescription className="text-gray-400">
-              {gameEndDialog.result === 'checkmate' 
-                ? gameEndDialog.winner === playerColor || (gameMode === 'human-vs-human' && gameEndDialog.winner === 'w')
-                  ? 'Congratulations! You won the game.'
-                  : 'Game over. You lost the game.'
-                : 'The game ended in a draw.'}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex justify-end space-x-2">
-            <Button 
-              variant="outline" 
-              onClick={() => setGameEndDialog({...gameEndDialog, open: false})}
-              className="border-gray-700"
-            >
-              Close
-            </Button>
-            <Button 
-              onClick={handleReset}
-              className="bg-chess-ai-purple hover:bg-chess-ai-purple-dark"
-            >
-              New Game
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+
+      
+      <VictoryModal 
+        winner={gameEndDialog.winner} 
+        onPlayAgain={handleReset} 
+      />
     </div>
   );
 };

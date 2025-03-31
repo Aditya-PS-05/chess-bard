@@ -18,10 +18,13 @@ interface ChessboardProps {
   gameMode: 'human-vs-human' | 'human-vs-ai';
   llmConfig?: LLMConfig;
   playerColor?: Color;
-  onGameEnd?: (result: 'checkmate' | 'stalemate', winner?: Color) => void;
+  onGameEnd?: (result: 'checkmate' | 'stalemate' | 'king-captured', winner?: Color) => void;
   onMove?: (move: { from: string, to: string, san: string, color: Color }) => void;
   onUndo?: () => void;
   isBoardFlipped?: boolean;
+  key?: number;
+  gameState: GameState;
+  onGameStateChange: (newState: GameState) => void;
 }
 
 const Chessboard: React.FC<ChessboardProps> = ({
@@ -31,15 +34,25 @@ const Chessboard: React.FC<ChessboardProps> = ({
   onGameEnd,
   onMove,
   onUndo,
-  isBoardFlipped = false
+  isBoardFlipped = false,
+  key,
+  gameState,
+  onGameStateChange
 }) => {
-  const [gameState, setGameState] = useState<GameState>(initializeChessGame());
   const [selectedSquare, setSelectedSquare] = useState<Square | null>(null);
   const [legalMoves, setLegalMoves] = useState<Square[]>([]);
   const [lastMove, setLastMove] = useState<{ from: Square, to: Square } | null>(null);
   const [isFlipped, setIsFlipped] = useState(isBoardFlipped);
   const [isDragging, setIsDragging] = useState(false);
   const [aiThinking, setAiThinking] = useState(false);
+
+  // Reset local state when key changes
+  useEffect(() => {
+    setSelectedSquare(null);
+    setLegalMoves([]);
+    setLastMove(null);
+    setAiThinking(false);
+  }, [key]);
   
   const boardRef = useRef<HTMLDivElement>(null);
   const draggedPieceRef = useRef<{ square: Square, piece: Piece } | null>(null);
@@ -65,7 +78,7 @@ const Chessboard: React.FC<ChessboardProps> = ({
             });
             
             if (newGameState !== gameState) {
-              setGameState(newGameState);
+              onGameStateChange(newGameState);
               setLastMove({ from: move.from as Square, to: move.to as Square });
               
               const lastMoveNotation = newGameState.history[newGameState.history.length - 1].notation;
@@ -115,8 +128,10 @@ const Chessboard: React.FC<ChessboardProps> = ({
       onGameEnd('checkmate', winner);
     } else if (gameState.stalemate && onGameEnd) {
       onGameEnd('stalemate');
+    } else if (gameState.gameOver && gameState.winner) {
+      onGameEnd?.('king-captured', gameState.winner);
     }
-  }, [gameState.checkmate, gameState.stalemate]);
+  }, [gameState.checkmate, gameState.stalemate, gameState.gameOver, gameState.winner]);
 
   useEffect(() => {
     setSelectedSquare(null);
@@ -124,6 +139,8 @@ const Chessboard: React.FC<ChessboardProps> = ({
   }, [gameState.turn]);
 
   const handleSquareClick = (square: Square) => {
+    if (gameState.gameOver) return;
+
     const piece = gameState.board[square];
     
     if (gameMode === 'human-vs-ai' && gameState.turn !== playerColor) {
@@ -139,7 +156,7 @@ const Chessboard: React.FC<ChessboardProps> = ({
         });
         
         if (newGameState !== gameState) {
-          setGameState(newGameState);
+          onGameStateChange(newGameState);
           setLastMove({ from: selectedSquare, to: square });
           
           const lastMoveNotation = newGameState.history[newGameState.history.length - 1].notation;
@@ -222,7 +239,7 @@ const Chessboard: React.FC<ChessboardProps> = ({
         });
         
         if (newGameState !== gameState) {
-          setGameState(newGameState);
+          onGameStateChange(newGameState);
           setLastMove({ from: fromSquare, to: targetSquare });
           
           const lastMoveNotation = newGameState.history[newGameState.history.length - 1].notation;
@@ -353,13 +370,13 @@ const Chessboard: React.FC<ChessboardProps> = ({
         return;
       }
 
-      setGameState(newState);
+      onGameStateChange(newState);
       setLastMove({ from: move.from, to: move.to });
       onMove?.({ from: move.from, to: move.to, san: newState.history[newState.history.length - 1].notation, color: gameState.turn });
 
       // Check for game end conditions
-      if (newState.checkmate || newState.stalemate) {
-        onGameEnd?.(newState.checkmate ? 'checkmate' : 'stalemate', newState.checkmate ? (newState.turn === 'w' ? 'b' : 'w') : undefined);
+      if (newState.checkmate || newState.stalemate || newState.gameOver) {
+        onGameEnd?.(newState.checkmate ? 'checkmate' : newState.stalemate ? 'stalemate' : 'king-captured', newState.checkmate ? (newState.turn === 'w' ? 'b' : 'w') : newState.gameOver ? newState.winner : undefined);
       }
     } catch (error) {
       console.error('Error getting AI move:', error);

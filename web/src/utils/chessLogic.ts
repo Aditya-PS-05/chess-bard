@@ -23,6 +23,8 @@ export interface GameState {
   stalemate: boolean;
   history: Move[];
   capturedPieces: { w: PieceType[], b: PieceType[] };
+  winner: Color | null;
+  gameOver: boolean;
 }
 
 export interface Move {
@@ -87,7 +89,9 @@ export function initializeChessGame(): GameState {
     checkmate: false,
     stalemate: false,
     history: [],
-    capturedPieces: { w: [], b: [] }
+    capturedPieces: { w: [], b: [] },
+    winner: null,
+    gameOver: false
   };
 }
 
@@ -95,9 +99,8 @@ export function getLegalMoves(state: GameState, square: Square): Square[] {
   const piece = state.board[square];
   if (!piece || piece.color !== state.turn) return [];
 
-  const potentialMoves = getPotentialMoves(state, square);
-  
-  return potentialMoves.filter(move => !wouldBeInCheck(state, square, move));
+  // Return all potential moves without filtering for check
+  return getPotentialMoves(state, square);
 }
 
 function wouldBeInCheck(state: GameState, from: Square, to: Square): boolean {
@@ -386,8 +389,11 @@ function getPotentialMoves(state: GameState, square: Square, ignoringCheck = fal
 
 export function makeMove(state: GameState, move: { from: Square, to: Square, promotion?: PieceType }): GameState {
   const { from, to, promotion } = move;
-  const piece = state.board[from];
   
+  // If game is over, return state without making any moves
+  if (state.gameOver) return state;
+  
+  const piece = state.board[from];
   if (!piece) return state;
   if (piece.color !== state.turn) return state;
   
@@ -398,7 +404,17 @@ export function makeMove(state: GameState, move: { from: Square, to: Square, pro
   
   const capturedPiece = newState.board[to];
   if (capturedPiece) {
-    newState.capturedPieces[capturedPiece.color].push(capturedPiece.type);
+    newState.capturedPieces[piece.color].push(capturedPiece.type);
+    
+    // Check if a king was captured
+    if (capturedPiece.type === 'k') {
+      newState.gameOver = true;
+      newState.winner = piece.color;
+      // Return immediately after king capture to prevent further moves
+      newState.board[to] = piece;
+      newState.board[from] = null;
+      return newState;
+    }
   }
   
   if (piece.type === 'p') {
