@@ -21,12 +21,16 @@ import { useGame } from '../contexts/GameContext';
 import { llmModels, LLMModel } from '../utils/llmUtils';
 import { Users, Bot, ChevronDown } from 'lucide-react';
 import { initializeChessGame, GameState } from '../utils/chessLogic';
+import { WelcomeModal } from '../components/WelcomeModal';
+import { ApiKeySettings } from '../components/ApiKeySettings';
 import { GameSettings } from '../components/GameSettings';
 import VictoryModal from '../components/VictoryModal';
 
 export default function Index() {
-  const { selectedModel, getLLMConfig, setSelectedModel } = useGame();
-  const [gameMode, setGameMode] = useState<'human-vs-human' | 'human-vs-ai'>('human-vs-human');
+  const { selectedModel, getLLMConfig, setSelectedModel, setApiKey } = useGame();
+  const [llmSettings, setLLMSettings] = useState<{ model: string, apiKey: string } | null>(null);
+  const [gameMode, setGameMode] = useState<'human-vs-human' | 'human-vs-ai' | undefined>();
+  const [opponentName, setOpponentName] = useState<string>();
   const [playerColor, setPlayerColor] = useState<'w' | 'b'>('w');
   const [gameEndDialog, setGameEndDialog] = useState<{
     open: boolean;
@@ -79,30 +83,50 @@ export default function Index() {
     setMoves(prev => prev.slice(0, -1));
   };
 
-  const handleModelSelect = (model: LLMModel | null) => {
-    console.log('Handling model selection:', model);
+  const handleModelSelect = (modelId: string | null) => {
+    console.log('Handling model selection:', modelId);
     const config = getLLMConfig();
     console.log('LLM Config:', config);
     
     setShowAiDialog(false);
-    setGameMode(model ? 'human-vs-ai' : 'human-vs-human');
+    setGameMode(modelId ? 'human-vs-ai' : 'human-vs-human');
     
     // Reset game
     handleReset();
     
-    setSelectedModel(model);
+    setSelectedModel(modelId);
     
+    const model = modelId ? llmModels.find(m => m.id === modelId) : null;
     toast({
       title: model ? "AI Connected" : "AI Disconnected",
       description: model ? `You're now playing against ${model.name}` : 'Switched to human vs human mode',
     });
   };
 
-  useEffect(() => {
-    if (selectedModel) {
-      handleModelSelect(selectedModel);
+  const handleWelcomeComplete = (settings: {
+    gameMode: 'human-vs-human' | 'human-vs-ai';
+    opponentName?: string;
+    aiModel?: string;
+    aiApiKey?: string;
+  }) => {
+    setGameMode(settings.gameMode);
+    setOpponentName(settings.opponentName);
+    
+    if (settings.gameMode === 'human-vs-ai' && settings.aiModel) {
+      setSelectedModel(settings.aiModel);
+      setLLMSettings({
+        model: settings.aiModel,
+        apiKey: settings.aiApiKey || ''
+      });
     }
-  }, [selectedModel]);
+    
+    toast({
+      title: 'Game Started',
+      description: settings.gameMode === 'human-vs-ai'
+        ? 'Playing against AI'
+        : `Playing against ${settings.opponentName}`,
+    });
+  };
 
   const handleMove = (move: { from: string, to: string, san: string, color: 'w' | 'b' }) => {
     console.log('Move:', move);
@@ -119,6 +143,9 @@ export default function Index() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-900 text-white">
+      {!gameMode && (
+        <WelcomeModal onClose={handleWelcomeComplete} />
+      )}
       {/* Header */}
       <header className="bg-gray-800 p-4 shadow-md">
         <div className="container mx-auto flex justify-between items-center">
@@ -170,18 +197,34 @@ export default function Index() {
           {/* Chessboard */}
           <div className="md:col-span-2">
             
-            <Chessboard 
-              key={key}
-              gameMode={gameMode}
-              llmConfig={getLLMConfig()}
-              playerColor={playerColor}
-              onGameEnd={handleGameEnd}
-              onMove={handleMove}
-              onUndo={handleUndo}
-              isBoardFlipped={playerColor === 'b'}
-              gameState={gameState}
-              onGameStateChange={setGameState}
-            />
+            {gameMode === 'human-vs-ai' && !llmSettings ? (
+              <div className="flex items-center justify-center h-full">
+                <ApiKeySettings
+                  onSettingsChange={(model, apiKey) => {
+                    setLLMSettings({ model, apiKey });
+                    setSelectedModel(model);
+                  }}
+                  initialModel={selectedModel}
+                />
+              </div>
+            ) : (
+              <Chessboard 
+                key={key}
+                gameMode={gameMode}
+                llmConfig={gameMode === 'human-vs-ai' ? {
+                  model: llmSettings?.model || selectedModel,
+                  apiKey: llmSettings?.apiKey || '',
+                  apiUrl: llmModels.find(m => m.id === (llmSettings?.model || selectedModel))?.apiUrl || ''
+                } : undefined}
+                playerColor={playerColor}
+                onGameEnd={handleGameEnd}
+                onMove={handleMove}
+                onUndo={handleUndo}
+                isBoardFlipped={playerColor === 'b'}
+                gameState={gameState}
+                onGameStateChange={setGameState}
+              />
+            )}
           </div>
           
           {/* Sidebar - Move History and Status */}
@@ -275,7 +318,7 @@ export default function Index() {
                   <div className="flex justify-between py-1 border-b border-gray-700">
                     <span className="text-gray-400">AI Model</span>
                     <span className="font-medium text-chess-ai-purple">
-                      {selectedModel?.name || 'No model selected'}
+                      {llmModels.find(m => m.id === selectedModel)?.name || 'No model selected'}
                     </span>
                   </div>
                 )}
@@ -306,12 +349,28 @@ export default function Index() {
         <DialogContent className="sm:max-w-[425px] bg-gray-900 text-white border-gray-700">
           <DialogHeader>
             <DialogTitle>Connect to AI</DialogTitle>
-            <DialogDescription className="text-gray-400">
-              Select an AI model and provide your API key to play against.
+            <DialogDescription>
+              Select an AI model and provide your API key
             </DialogDescription>
           </DialogHeader>
-          <GameSettings />
-          <div className="text-xs text-gray-500 mt-2">
+          
+          <ApiKeySettings
+            initialModel={selectedModel}
+            onSettingsChange={(model, apiKey) => {
+              setSelectedModel(model);
+              setApiKey(apiKey);
+              setGameMode('human-vs-ai');
+              setShowAiDialog(false);
+              
+              const selectedModelInfo = llmModels.find(m => m.id === model);
+              toast({
+                title: 'AI Connected',
+                description: `You're now playing against ${selectedModelInfo?.name}`,
+              });
+            }}
+          />
+          
+          <div className="text-xs text-gray-500 mt-4">
             Your API key is stored locally and is never sent to our servers.
           </div>
         </DialogContent>

@@ -2,8 +2,9 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { LLMModel, llmModels } from '../utils/llmUtils';
 
 interface GameContextType {
-  selectedModel: LLMModel | null;
-  setSelectedModel: (model: LLMModel | null) => void;
+  selectedModel: string;
+  setSelectedModel: (modelId: string) => void;
+  setApiKey: (apiKey: string) => void;
   getLLMConfig: () => {
     model: string;
     apiKey: string;
@@ -13,45 +14,34 @@ interface GameContextType {
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
-const getApiKeyForProvider = (provider: string): string => {
-  switch (provider) {
-    case 'openai':
-      return import.meta.env.VITE_OPENAI_API_KEY || '';
-    case 'google':
-      return import.meta.env.VITE_GOOGLE_API_KEY || '';
-    case 'anthropic':
-      return import.meta.env.VITE_ANTHROPIC_API_KEY || '';
-    default:
-      return '';
-  }
-};
-
 export function GameProvider({ children }: { children: ReactNode }) {
-  const [selectedModel, setSelectedModel] = useState<LLMModel | null>(llmModels[0]);
+  const [selectedModel, setSelectedModel] = useState<string>(llmModels[0].id);
+  const [apiKey, setApiKey] = useState<string>('');
 
   const getLLMConfig = (): {
     model: string;
     apiKey: string;
     apiUrl: string;
   } | null => {
-    if (!selectedModel) return null;
+    const model = llmModels.find(m => m.id === selectedModel);
+    if (!model) return null;
 
-    const apiKey = getApiKeyForProvider(selectedModel.provider);
     if (!apiKey) {
-      console.error(`${selectedModel.provider} API key not found in environment variables`);
+      console.error('No API key provided');
       return null;
     }
 
     return {
-      model: selectedModel.id,
+      model: model.id,
       apiKey,
-      apiUrl: selectedModel.apiUrl
+      apiUrl: model.apiUrl
     };
   };
 
   const value = {
     selectedModel,
     setSelectedModel,
+    setApiKey,
     getLLMConfig
   };
 

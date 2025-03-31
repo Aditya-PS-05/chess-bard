@@ -9,7 +9,6 @@ import {
   PieceType,
   getLegalMoves,
   makeMove,
-  initializeChessGame,
   getKingSafety
 } from '../utils/chessLogic';
 import { getAIMove, LLMConfig } from '../utils/llmUtils';
