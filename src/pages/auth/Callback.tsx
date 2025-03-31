@@ -8,12 +8,27 @@ export default function AuthCallback() {
 
   useEffect(() => {
     const handleAuthCallback = async () => {
-      const { error } = await supabase.auth.getSession();
-      if (error) {
-        console.error('Error during auth callback:', error.message);
-        navigate('/auth/login');
-      } else {
+      try {
+        // Check if we have an access token in the URL hash
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = hashParams.get('access_token');
+        
+        if (accessToken) {
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: hashParams.get('refresh_token') || '',
+          });
+          
+          if (error) throw error;
+        }
+        
+        const { error } = await supabase.auth.getSession();
+        if (error) throw error;
+        
         navigate('/');
+      } catch (error) {
+        console.error('Error during auth callback:', error);
+        navigate('/auth/login');
       }
     };
 

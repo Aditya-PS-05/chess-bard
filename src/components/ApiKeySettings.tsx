@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Icons } from "@/components/ui/icons";
 
 interface ApiKeySettingsProps {
   onSettingsChange: (model: string, apiKey: string) => void;
@@ -15,9 +17,10 @@ interface ApiKeySettingsProps {
 export function ApiKeySettings({ onSettingsChange, initialModel }: ApiKeySettingsProps) {
   const [selectedModel, setSelectedModel] = useState<string>(initialModel || llmModels[0].id);
   const [apiKey, setApiKey] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!apiKey) {
       toast({
         title: "API Key Required",
@@ -27,16 +30,27 @@ export function ApiKeySettings({ onSettingsChange, initialModel }: ApiKeySetting
       return;
     }
 
-    // Save to localStorage
-    localStorage.setItem('chess_llm_model', selectedModel);
-    localStorage.setItem('chess_llm_api_key', apiKey);
-    
-    onSettingsChange(selectedModel, apiKey);
-    
-    toast({
-      title: "Settings Saved",
-      description: "Your API key has been saved securely.",
-    });
+    setIsLoading(true);
+    try {
+      // Save to localStorage
+      localStorage.setItem('chess_llm_model', selectedModel);
+      localStorage.setItem('chess_llm_api_key', apiKey);
+      
+      onSettingsChange(selectedModel, apiKey);
+      
+      toast({
+        title: "Settings Saved",
+        description: "Your API key has been saved securely.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save settings. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Load saved settings on mount
@@ -88,9 +102,19 @@ export function ApiKeySettings({ onSettingsChange, initialModel }: ApiKeySetting
           </p>
         </div>
 
-        <Button onClick={handleSave} className="w-full">
-          Save Settings
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button onClick={handleSave} className="w-full" disabled={isLoading}>
+                {isLoading && <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />}
+                {isLoading ? 'Saving...' : 'Save Settings'}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Save your API key and model selection</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </CardContent>
     </Card>
   );
