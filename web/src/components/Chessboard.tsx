@@ -18,8 +18,8 @@ interface ChessboardProps {
   gameMode: 'human-vs-human' | 'human-vs-ai';
   llmConfig?: LLMConfig;
   playerColor?: Color;
-  onMove?: (move: { from: string, to: string, notation: string }) => void;
   onGameEnd?: (result: 'checkmate' | 'stalemate', winner?: Color) => void;
+  onMove?: (move: { from: string, to: string, san: string, color: Color }) => void;
   onUndo?: () => void;
   isBoardFlipped?: boolean;
 }
@@ -28,8 +28,8 @@ const Chessboard: React.FC<ChessboardProps> = ({
   gameMode = 'human-vs-human',
   llmConfig,
   playerColor = 'w',
-  onMove,
   onGameEnd,
+  onMove,
   onUndo,
   isBoardFlipped = false
 }) => {
@@ -73,7 +73,8 @@ const Chessboard: React.FC<ChessboardProps> = ({
                 onMove({ 
                   from: move.from, 
                   to: move.to, 
-                  notation: lastMoveNotation 
+                  san: lastMoveNotation,
+                  color: gameState.turn
                 });
               }
             } else {
@@ -146,7 +147,8 @@ const Chessboard: React.FC<ChessboardProps> = ({
             onMove({ 
               from: selectedSquare, 
               to: square, 
-              notation: lastMoveNotation 
+              san: lastMoveNotation,
+              color: gameState.turn
             });
           }
         }
@@ -228,7 +230,8 @@ const Chessboard: React.FC<ChessboardProps> = ({
             onMove({ 
               from: fromSquare, 
               to: targetSquare, 
-              notation: lastMoveNotation 
+              san: lastMoveNotation,
+              color: gameState.turn
             });
           }
         }
@@ -352,7 +355,7 @@ const Chessboard: React.FC<ChessboardProps> = ({
 
       setGameState(newState);
       setLastMove({ from: move.from, to: move.to });
-      onMove?.({ from: move.from, to: move.to, notation: newState.history[newState.history.length - 1].notation });
+      onMove?.({ from: move.from, to: move.to, san: newState.history[newState.history.length - 1].notation, color: gameState.turn });
 
       // Check for game end conditions
       if (newState.checkmate || newState.stalemate) {

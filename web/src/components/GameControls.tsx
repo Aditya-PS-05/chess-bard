@@ -1,59 +1,36 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { RotateCcw, Square, ChevronLeft } from 'lucide-react';
 
 interface GameControlsProps {
+  onUndo: () => void;
   onReset: () => void;
-  onUndo?: () => void;
-  onFlipBoard?: () => void;
-  canUndo: boolean;
-  gameMode: 'human-vs-human' | 'human-vs-ai';
+  onFlipBoard: () => void;
+  isBoardFlipped: boolean;
 }
 
-const GameControls: React.FC<GameControlsProps> = ({
-  onReset,
+export function GameControls({
   onUndo,
+  onReset,
   onFlipBoard,
-  canUndo,
-  gameMode
-}) => {
+  isBoardFlipped
+}: GameControlsProps) {
   return (
-    <div className="flex flex-wrap gap-2 md:flex-nowrap">
-      <Button 
-        variant="default" 
-        onClick={onReset} 
-        className="flex-1 bg-gray-800 hover:bg-gray-700"
+    <div className="space-y-4">
+      <div className="flex space-x-2">
+        <Button onClick={onUndo} variant="outline" className="flex-1">
+          Undo Move
+        </Button>
+        <Button onClick={onReset} variant="outline" className="flex-1">
+          Reset Game
+        </Button>
+      </div>
+      <Button
+        onClick={onFlipBoard}
+        variant="outline"
+        className="w-full"
       >
-        <Square size={18} className="mr-2" />
-        New Game
+        {isBoardFlipped ? 'Reset View' : 'Flip Board'}
       </Button>
-      
-      {onUndo && (
-        <Button 
-          variant="outline" 
-          onClick={onUndo} 
-          disabled={!canUndo} 
-          className="flex-1 border-gray-700 text-white"
-        >
-          <ChevronLeft size={18} className="mr-2" />
-          Undo
-          {gameMode === 'human-vs-ai' && " (2 Moves)"}
-        </Button>
-      )}
-      
-      {onFlipBoard && (
-        <Button 
-          variant="outline" 
-          onClick={onFlipBoard} 
-          className="flex-1 border-gray-700 text-white"
-        >
-          <RotateCcw size={18} className="mr-2" />
-          Flip Board
-        </Button>
-      )}
     </div>
   );
-};
-
-export default GameControls;
+}

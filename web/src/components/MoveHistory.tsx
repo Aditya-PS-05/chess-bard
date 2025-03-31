@@ -1,57 +1,56 @@
-
 import React from 'react';
-import { Move } from '../utils/chessLogic';
+import { ScrollArea } from '@/components/ui/scroll-area';
+
+interface Move {
+  san: string;  // Standard Algebraic Notation
+  color: 'w' | 'b';
+  number: number;
+}
 
 interface MoveHistoryProps {
   moves: Move[];
-  startingMoveNumber?: number;
+  whiteScore?: number;
+  blackScore?: number;
 }
 
-const MoveHistory: React.FC<MoveHistoryProps> = ({ 
-  moves, 
-  startingMoveNumber = 1 
-}) => {
-  // Group moves by pairs (white and black)
-  const groupedMoves = [];
-  for (let i = 0; i < moves.length; i += 2) {
-    groupedMoves.push({
-      moveNumber: Math.floor(i / 2) + startingMoveNumber,
-      white: moves[i],
-      black: i + 1 < moves.length ? moves[i + 1] : undefined
-    });
-  }
+export function MoveHistory({ moves, whiteScore = 0, blackScore = 0 }: MoveHistoryProps) {
+  const movesByNumber = moves.reduce((acc, move) => {
+    const number = move.number;
+    if (!acc[number]) {
+      acc[number] = { white: null, black: null };
+    }
+    acc[number][move.color === 'w' ? 'white' : 'black'] = move.san;
+    return acc;
+  }, {} as Record<number, { white: string | null; black: string | null; }>);
 
   return (
-    <div className="bg-gray-800 rounded-lg p-4 h-full overflow-auto">
-      <h3 className="text-white font-bold mb-3 text-lg">Move History</h3>
-      
-      <div className="grid grid-cols-[auto_1fr_1fr] gap-x-3 gap-y-1 text-white">
-        <div className="font-medium text-gray-400">#</div>
-        <div className="font-medium text-gray-400">White</div>
-        <div className="font-medium text-gray-400">Black</div>
-        
-        {groupedMoves.length === 0 ? (
-          <div className="col-span-3 text-center text-gray-400 my-4">
-            No moves yet
-          </div>
-        ) : (
-          groupedMoves.map((group, index) => (
-            <React.Fragment key={group.moveNumber}>
-              <div className="text-gray-400">{group.moveNumber}.</div>
-              <div className={group.white?.isCheck ? "text-yellow-300" : "text-white"}>
-                {group.white?.notation}
-                {group.white?.isCheckmate && <span className="ml-1 text-red-400">♛</span>}
-              </div>
-              <div className={group.black?.isCheck ? "text-yellow-300" : "text-white"}>
-                {group.black?.notation}
-                {group.black?.isCheckmate && <span className="ml-1 text-red-400">♛</span>}
-              </div>
-            </React.Fragment>
-          ))
-        )}
+    <div className="bg-gray-900 rounded-lg p-4">
+      <div className="flex justify-between items-center mb-4">
+        <div className="text-sm font-medium">
+          <span className="text-white">White</span>
+          <span className="text-gray-400 mx-2">vs</span>
+          <span className="text-white">Black</span>
+        </div>
+        <div className="text-sm">
+          <span className="text-white">{whiteScore}</span>
+          <span className="text-gray-400 mx-2">-</span>
+          <span className="text-white">{blackScore}</span>
+        </div>
       </div>
+      
+      <ScrollArea className="h-[300px]">
+        <div className="space-y-1">
+          {Object.entries(movesByNumber).map(([number, { white, black }]) => (
+            <div key={number} className="flex text-sm">
+              <span className="w-8 text-gray-500">{number}.</span>
+              <div className="flex-1 grid grid-cols-2 gap-2">
+                <span className="text-white">{white || ''}</span>
+                <span className="text-white">{black || ''}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </ScrollArea>
     </div>
   );
-};
-
-export default MoveHistory;
+}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Chessboard from '@/components/Chessboard';
-import MoveHistory from '@/components/MoveHistory';
-import GameControls from '@/components/GameControls';
+import { MoveHistory } from '@/components/MoveHistory';
+import { GameControls } from '@/components/GameControls';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -33,12 +33,14 @@ export default function Index() {
     winner?: 'w' | 'b';
   }>({ open: false, result: 'checkmate' });
   const [showAiDialog, setShowAiDialog] = useState(false);
+  const [moves, setMoves] = useState<Array<{ san: string; color: 'w' | 'b'; number: number; }>>([]);
+  const [scores, setScores] = useState({ white: 0, black: 0 });
   
   const { toast } = useToast();
 
   // Reset game to initial state
   const handleReset = () => {
-    // Reset game logic here
+    setMoves([]);
   };
 
   // Handle game end
@@ -48,11 +50,18 @@ export default function Index() {
       result,
       winner
     });
+    
+    if (winner) {
+      setScores(prev => ({
+        ...prev,
+        [winner === 'w' ? 'white' : 'black']: prev[winner === 'w' ? 'white' : 'black'] + 1
+      }));
+    }
   };
 
   // Undo last move
   const handleUndo = () => {
-    // Undo move logic
+    setMoves(prev => prev.slice(0, -1));
   };
 
   const handleModelSelect = (model: LLMModel | null) => {
@@ -79,6 +88,15 @@ export default function Index() {
       handleModelSelect(selectedModel);
     }
   }, [selectedModel]);
+
+  const handleMove = (move: { from: string, to: string, san: string, color: 'w' | 'b' }) => {
+    console.log('Move:', move);
+    setMoves(prev => [...prev, {
+      san: move.san,
+      color: move.color,
+      number: Math.floor(prev.length / 2) + 1
+    }]);
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-900 text-white">
@@ -137,8 +155,7 @@ export default function Index() {
                 onReset={handleReset}
                 onUndo={handleUndo}
                 onFlipBoard={() => setIsBoardFlipped(!isBoardFlipped)}
-                canUndo={false}
-                gameMode={gameMode}
+                isBoardFlipped={isBoardFlipped}
               />
             </div>
             
@@ -147,9 +164,7 @@ export default function Index() {
               llmConfig={getLLMConfig()}
               playerColor={playerColor}
               onGameEnd={handleGameEnd}
-              onMove={(move) => {
-                console.log('Move:', move);
-              }}
+              onMove={handleMove}
               onUndo={handleUndo}
               isBoardFlipped={isBoardFlipped}
             />
@@ -255,7 +270,11 @@ export default function Index() {
             
             {/* Move History */}
             <div className="flex-1">
-              <MoveHistory moves={[]} />
+              <MoveHistory 
+                moves={moves}
+                whiteScore={scores.white}
+                blackScore={scores.black}
+              />
             </div>
           </div>
         </div>

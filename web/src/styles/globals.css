@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --chess-light: #f0d9b5;
+  --chess-dark: #b58863;
+  --chess-selected: #829769;
+  --chess-legal: #3691b0;
+  --chess-danger: #ff6b6b;
+  --chess-escape: #4ecdc4;
+}
+
+.bg-chess-light { background-color: var(--chess-light); }
+.bg-chess-dark { background-color: var(--chess-dark); }
+.bg-chess-selected { background-color: var(--chess-selected); }
+.bg-chess-legal { background-color: var(--chess-legal); }
+.bg-chess-danger { background-color: var(--chess-danger); }
+.bg-chess-escape { background-color: var(--chess-escape); }
