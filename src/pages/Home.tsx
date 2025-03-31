@@ -9,8 +9,8 @@ const Home = () => {
   const { isAuthenticated } = useAuth();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
-      <div className="container mx-auto px-4 py-16 md:py-24">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white w-full">
+      <div className="w-full px-4 py-16 md:py-24">
         <div className="flex flex-col items-center text-center mb-16">
           <div className="flex items-center mb-6">
             <svg

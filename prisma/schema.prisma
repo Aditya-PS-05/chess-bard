@@ -1,0 +1,48 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String         @id @default(cuid())
+  email         String        @unique
+  name          String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  apiKeys       ApiKey[]
+  gamesAsWhite  Game[]        @relation("WhitePlayer")
+  gamesAsBlack  Game[]        @relation("BlackPlayer")
+}
+
+model ApiKey {
+  id            String       @id @default(cuid())
+  userId        String
+  provider      String       // e.g., 'openai', 'google', 'anthropic'
+  apiKey        String
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  user          User         @relation(fields: [userId], references: [id])
+
+  @@unique([userId, provider])
+}
+
+model Game {
+  id            String       @id @default(cuid())
+  whitePlayerId String
+  blackPlayerId String
+  winner        String?      // 'white', 'black', or null for draw
+  moves         String[]     // Array of moves in SAN notation
+  startedAt     DateTime     @default(now())
+  endedAt       DateTime?
+  gameMode      String       // 'human-vs-human' or 'human-vs-ai'
+  aiModel       String?      // AI model used if gameMode is 'human-vs-ai'
+  whitePlayer   User         @relation("WhitePlayer", fields: [whitePlayerId], references: [id])
+  blackPlayer   User         @relation("BlackPlayer", fields: [blackPlayerId], references: [id])
+
+  @@index([whitePlayerId])
+  @@index([blackPlayerId])
+}

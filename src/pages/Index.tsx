@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Chessboard from '@/components/Chessboard';
 import { MoveHistory } from '@/components/MoveHistory';
-import { GameControls } from '@/components/GameControls';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -11,22 +11,16 @@ import {
   DialogHeader,
   DialogTitle
 } from "@/components/ui/dialog";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
 import { useGame } from '../contexts/GameContext';
 import { llmModels, LLMModel } from '../utils/llmUtils';
 import { Users, Bot, ChevronDown } from 'lucide-react';
-import { initializeChessGame, GameState } from '../utils/chessLogic';
+import { initializeChessGame } from '../utils/chessLogic';
 import { WelcomeModal } from '../components/WelcomeModal';
 import { ApiKeySettings } from '../components/ApiKeySettings';
-import { GameSettings } from '../components/GameSettings';
 import VictoryModal from '../components/VictoryModal';
 
 export default function Index() {
+  const { user } = useRequireAuth();
   const { selectedModel, getLLMConfig, setSelectedModel, setApiKey } = useGame();
   const [llmSettings, setLLMSettings] = useState<{ model: string, apiKey: string } | null>(null);
   const [gameMode, setGameMode] = useState<'human-vs-human' | 'human-vs-ai' | undefined>();

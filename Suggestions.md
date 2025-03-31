@@ -228,3 +228,14 @@ GET /api/users/stats - Get user statistics
 7. CSRF protection
 
 By implementing these backend recommendations, you'll create a robust foundation for the Chess Bard AI application that supports scalability, security, and an enhanced user experience.
+
+
+1.) Make the chessboard width and height bigger
+2.) Make the navbar items more arranged. 
+3.) Show the player names
+4.) Add the audio also, like a bg-music and the piece sound and also killing sound, and winning and the loosing sound.
+5.) Add a logout button the navbar right
+6.) Add the settings in the profile dropdown and remove it from the navbar
+7.) Make the overrall web-app mobile responsive.
+8.) Store the player wins and the losses in the database
+7.) In the profile section show the wins and the loses.
