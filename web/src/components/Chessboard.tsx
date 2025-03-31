@@ -9,7 +9,8 @@ import {
   PieceType,
   getLegalMoves,
   makeMove,
-  initializeChessGame
+  initializeChessGame,
+  getKingSafety
 } from '../utils/chessLogic';
 import { getAIMove, LLMConfig } from '../utils/llmUtils';
 import { useToast } from '@/hooks/use-toast';
@@ -45,6 +46,13 @@ const Chessboard: React.FC<ChessboardProps> = ({
   const [isFlipped, setIsFlipped] = useState(isBoardFlipped);
   const [isDragging, setIsDragging] = useState(false);
   const [aiThinking, setAiThinking] = useState(false);
+  const [kingSafety, setKingSafety] = useState<{ kingSquare: Square, dangerSquares: Square[], attackPaths: Square[] } | null>(null);
+
+  // Update king safety whenever the game state changes
+  useEffect(() => {
+    const safety = getKingSafety(gameState, gameState.turn);
+    setKingSafety(safety);
+  }, [gameState]);
 
   // Reset local state when key changes
   useEffect(() => {
@@ -302,6 +310,8 @@ const Chessboard: React.FC<ChessboardProps> = ({
           highlightClass = 'bg-chess-last-move';
         } else if (isCheck) {
           highlightClass = 'bg-chess-check';
+        } else if (kingSafety?.attackPaths.includes(square)) {
+          highlightClass = 'bg-red-500'; // Brighter, more dangerous red for attack path
         }
         
         squares.push(

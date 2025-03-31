@@ -668,6 +668,82 @@ export function getBoardStateForLLM(state: GameState): string {
   return fen;
 }
 
+function getSquaresBetween(from: Square, to: Square): Square[] {
+  const fromFile = from.charCodeAt(0) - 97; // 'a' -> 0
+  const fromRank = parseInt(from[1]) - 1; // '1' -> 0
+  const toFile = to.charCodeAt(0) - 97;
+  const toRank = parseInt(to[1]) - 1;
+
+  const squares: Square[] = [];
+  const fileStep = Math.sign(toFile - fromFile);
+  const rankStep = Math.sign(toRank - fromRank);
+
+  // For diagonal, horizontal, or vertical moves
+  if (Math.abs(toFile - fromFile) === Math.abs(toRank - fromRank) || // diagonal
+      fromFile === toFile || fromRank === toRank) { // straight lines
+    let currentFile = fromFile + fileStep;
+    let currentRank = fromRank + rankStep;
+
+    while (
+      (fileStep === 0 || currentFile !== toFile + fileStep) &&
+      (rankStep === 0 || currentRank !== toRank + rankStep)
+    ) {
+      const square = `${String.fromCharCode(currentFile + 97)}${currentRank + 1}` as Square;
+      squares.push(square);
+      currentFile += fileStep;
+      currentRank += rankStep;
+    }
+  }
+
+  return squares;
+}
+
+export function getKingSafety(gameState: GameState, color: Color): { kingSquare: Square, dangerSquares: Square[], attackPaths: Square[] } {
+  // Find the king's position
+  let kingSquare: Square | null = null;
+  for (const square in gameState.board) {
+    const piece = gameState.board[square as Square];
+    if (piece && piece.type === 'k' && piece.color === color) {
+      kingSquare = square as Square;
+      break;
+    }
+  }
+
+  if (!kingSquare) return { kingSquare: 'a1', dangerSquares: [], attackPaths: [] };
+
+  // Find squares with opponent pieces that can attack the king and their attack paths
+  const opponentColor = color === 'w' ? 'b' : 'w';
+  const dangerSquares = new Set<Square>();
+  const attackPaths = new Set<Square>();
+  
+  for (const square in gameState.board) {
+    const piece = gameState.board[square as Square];
+    if (piece && piece.color === opponentColor) {
+      // Check if this piece can attack the king's position
+      const moves = getPotentialMoves(gameState, square as Square, true);
+      if (moves.includes(kingSquare)) {
+        dangerSquares.add(square as Square);
+        // For pieces that attack in straight lines (bishop, rook, queen)
+        if (['b', 'r', 'q'].includes(piece.type)) {
+          // Get all squares between the attacking piece and the king
+          const pathSquares = getSquaresBetween(square as Square, kingSquare);
+          pathSquares.forEach(s => attackPaths.add(s));
+        }
+      }
+    }
+  }
+
+  // Get safe squares for the king to move to
+  const kingMoves = getLegalMoves(gameState, kingSquare);
+  const safeSquares = kingMoves.filter(move => !attackPaths.has(move));
+
+  return {
+    kingSquare,
+    dangerSquares: Array.from(dangerSquares),
+    attackPaths: Array.from(attackPaths)
+  };
+}
+
 export function parseLLMMove(state: GameState, moveString: string): { from: Square, to: Square, promotion?: PieceType } | null {
   moveString = moveString.trim().replace(/\s+/g, ' ');
   
