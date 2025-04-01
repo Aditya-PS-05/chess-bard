@@ -420,7 +420,7 @@ const Chessboard: React.FC<ChessboardProps> = ({
         <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded">
           <div className="bg-white p-4 rounded-lg shadow-lg flex items-center gap-3">
             <div className="w-4 h-4 bg-chess-ai-purple rounded-full thinking-indicator"></div>
-            <span className="text-lg font-medium">AI is thinking...</span>
+            <span className="text-lg font-medium text-black">AI is thinking...</span>
           </div>
         </div>
       )}
@@ -430,7 +430,7 @@ const Chessboard: React.FC<ChessboardProps> = ({
         <div className="absolute inset-0 flex items-center justify-center bg-black/50">
           <div className="bg-gray-800 p-4 rounded-lg shadow-lg flex items-center space-x-3">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
-            <span className="text-white font-medium">AI is thinking...</span>
+            <span className="text-black font-medium">AI is thinking...</span>
           </div>
         </div>
       )}

@@ -105,7 +105,7 @@ export function ApiKeySettings({ onSettingsChange, initialModel }: ApiKeySetting
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button onClick={handleSave} className="w-full" disabled={isLoading}>
+              <Button onClick={handleSave} className="w-full text-black hover:text-white" disabled={isLoading}>
                 {isLoading && <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />}
                 {isLoading ? 'Saving...' : 'Save Settings'}
               </Button>
