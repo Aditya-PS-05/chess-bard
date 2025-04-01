@@ -2,6 +2,25 @@
 
 Chess Bard AI is an interactive chess application where you can play against various AI language models. The application combines traditional chess gameplay with modern AI capabilities to create a unique gaming experience.
 
+## Project Images
+
+<p align="center">
+  <img src="public/project images/home-page.png" width="150">
+  <img src="public/project images/login.png" width="150">
+  <img src="public/project images/signup.png" width="150">
+</p>
+
+<p align="center">
+  <img src="public/project images/Before match.png" width="150">
+  <img src="public/project images/live-match.png" width="150">
+  <img src="public/project images/select.png" width="150">
+</p>
+
+<p align="center">
+  <img src="public/project images/AI thinking.png" width="150">
+</p>
+
+
 ## Features
 
 - Play chess against different AI language models and human
@@ -9,6 +28,8 @@ Chess Bard AI is an interactive chess application where you can play against var
 - Move history tracking
 - Game controls (flip board, new game, undo move)
 - User authentication (Database not impleted due to time constraint)
+
+
 
 ## MileStones Achieved
 
