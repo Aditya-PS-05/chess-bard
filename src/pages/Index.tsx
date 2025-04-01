@@ -136,25 +136,26 @@ export default function Index() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-900 text-white">
+    <div className="w-screen flex flex-col bg-gray-900 text-white">
       {!gameMode && (
         <WelcomeModal onClose={handleWelcomeComplete} />
       )}
       {/* Header */}
-      <header className="bg-gray-800 p-4 shadow-md">
-        <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-white flex items-center">
+      <header className="w-full bg-gray-800 py-3 shadow-md sticky top-0 z-50">
+        <nav className="w-[68%] mx-auto flex justify-between items-center">
+          {/* <h1 className="text-xl md:text-2xl font-bold text-white flex items-center gap-1">
             <span className="text-chess-ai-purple">Chess</span>
             <span>Bard</span>
-            <span className="ml-1 text-xs bg-chess-ai-purple px-2 py-0.5 rounded-full">AI</span>
+            <span className="text-[10px] md:text-xs bg-chess-ai-purple px-1.5 py-0.5 rounded-full">AI</span>
           </h1>
-          
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-400 hidden md:inline">
-              {gameMode === 'human-vs-human' ? 'Human vs Human' : 'Human vs AI'}
-            </span>
-            
-            <div className="relative">
+           */}
+          <div className="flex items-center gap-2 md:gap-4 ml-16">
+            <div className="hidden md:flex items-center gap-4">
+              <span className="text-sm text-gray-400">
+                {gameMode === 'human-vs-human' ? 'Human vs Human' : 'Human vs AI'}
+              </span>
+              
+              <div className="relative">
               <Button
                 variant={gameMode === 'human-vs-human' ? 'default' : 'outline'}
                 onClick={() => setGameMode('human-vs-human')}
@@ -180,16 +181,17 @@ export default function Index() {
                 <Bot size={16} className="mr-2" />
                 <span className="hidden sm:inline">AI</span>
               </Button>
+              </div>
             </div>
           </div>
-        </div>
+        </nav>
       </header>
       
       {/* Main Content */}
-      <main className="container mx-auto flex-1 p-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <main className="w-[68%] mx-auto flex-1">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
           {/* Chessboard */}
-          <div className="md:col-span-2">
+          <div className="md:col-span-2 flex items-center justify-center" style={{ minHeight: '80vh' }}>
             
             {gameMode === 'human-vs-ai' && !llmSettings ? (
               <div className="flex items-center justify-center h-full">
@@ -258,7 +260,7 @@ export default function Index() {
                         AI
                       </span>
                     ) : (
-                      <span className="font-medium">Player 1</span>
+                      <span className="font-medium">{user?.name || 'Player 1'}</span>
                     )}
                   </div>
                   <div className="text-xs text-gray-400 mt-1">
@@ -277,7 +279,7 @@ export default function Index() {
                         AI
                       </span>
                     ) : (
-                      <span className="font-medium">Player 2</span>
+                      <span className="font-medium">{opponentName || 'Player 2'}</span>
                     )}
                   </div>
                   <div className="text-xs text-gray-400 mt-1">

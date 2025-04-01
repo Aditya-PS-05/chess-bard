@@ -33,10 +33,10 @@ export const llmModels: LLMModel[] = [
     id: 'gemini-pro',
     name: 'Google Gemini Pro',
     description: 'Google\'s most capable model for chess analysis.',
-    apiUrl: 'https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent',
+    apiUrl: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
     provider: 'gemini',
     requiresApiKey: true,
-    defaultApiUrl: 'https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent'
+    defaultApiUrl: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent'
   },
   {
     id: 'command',
@@ -202,10 +202,11 @@ async function getGrokResponse(prompt: string, config: LLMConfig): Promise<strin
 }
 
 async function getGeminiResponse(prompt: string, config: LLMConfig): Promise<string> {
-  const response = await fetch(`${config.apiUrl}?key=${config.apiKey}`, {
+  const response = await fetch(`${config.apiUrl}`, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'x-goog-api-key': config.apiKey
     },
     body: JSON.stringify({
       contents: [
@@ -217,13 +218,34 @@ async function getGeminiResponse(prompt: string, config: LLMConfig): Promise<str
       ],
       generationConfig: {
         temperature: config.temperature || 0.7,
-        maxOutputTokens: config.maxTokens || 50
-      }
+        maxOutputTokens: config.maxTokens || 1024,
+        topP: 0.8,
+        topK: 40
+      },
+      safetySettings: [
+        {
+          category: 'HARM_CATEGORY_HARASSMENT',
+          threshold: 'BLOCK_NONE'
+        },
+        {
+          category: 'HARM_CATEGORY_HATE_SPEECH',
+          threshold: 'BLOCK_NONE'
+        },
+        {
+          category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+          threshold: 'BLOCK_NONE'
+        },
+        {
+          category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
+          threshold: 'BLOCK_NONE'
+        }
+      ]
     })
   });
 
   if (!response.ok) {
-    throw new Error(`Gemini API error: ${response.statusText}`);
+    const error = await response.json();
+    throw new Error(`Gemini API error: ${error.error.message || response.statusText}`);
   }
 
   const data = await response.json();
