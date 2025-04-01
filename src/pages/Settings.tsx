@@ -39,17 +39,6 @@ const Settings = () => {
         </CardContent>
       </Card>
       
-      <Card className="bg-gray-900 border-gray-700">
-        <CardHeader>
-          <CardTitle className="text-white">Game Settings</CardTitle>
-          <CardDescription className="text-gray-400">
-            Configure AI model and game preferences
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <GameSettings />
-        </CardContent>
-      </Card>
     </div>
   );
 };
