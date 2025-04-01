@@ -4,41 +4,26 @@ Chess Bard AI is an interactive chess application where you can play against var
 
 ## Features
 
-- Play chess against different AI language models
+- Play chess against different AI language models and human
 - Interactive chessboard with move validation
 - Move history tracking
 - Game controls (flip board, new game, undo move)
-- User authentication
-- Game state persistence
+- User authentication (Database not impleted due to time constraint)
 
-## Project Info
+## MileStones Achieved
 
-**URL**: https://lovable.dev/projects/297c866f-85a4-4ef9-bedd-4fca73476a41
+- [x] Develop a functional chessboard UI (2 humans playing against each other on the same device) with legal move validation (i.e., implement all chess rules).
+- [x] Replace one human with an LLM agent that can play the moves against the human.
+- [x] Allow the human player to choose which LLM they want to play against (e.g., Gemini, OpenAI GPT, Cohere, etc.).
 
-## How can I edit this code?
-
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/297c866f-85a4-4ef9-bedd-4fca73476a41) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+Follow these steps to setup the project locally:
 
 ```sh
 # Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+git clone https://github.com/Aditya-PS-05/chess-bard.git
 
 # Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+cd chess-bard
 
 # Step 3: Install the necessary dependencies.
 npm i
@@ -56,13 +41,3 @@ This project is built with:
 - React
 - shadcn-ui
 - Tailwind CSS
-
-For backend implementation details, please refer to [Backend.md](./Backend.md)
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/297c866f-85a4-4ef9-bedd-4fca73476a41) and click on Share -> Publish.
-
-## I want to use a custom domain - is that possible?
-
-We don't support custom
